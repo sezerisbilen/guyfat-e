@@ -1,0 +1,17 @@
+# Render.com ayarı: sinyal sunucusunu sürekli açık bir adreste çalıştırır.
+# Masaüstü programına (Electron) gerek yok, sadece server.js çalışır.
+services:
+  - type: web
+    name: sesli-sohbet
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /config
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Giriş kodu: bilmeyen oda listesini göremez, odaya giremez.
+      # Değeri buraya yazma; Render panelinde (Environment) gir.
+      - key: ACCESS_CODE
+        sync: false

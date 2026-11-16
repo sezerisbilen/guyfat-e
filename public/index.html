@@ -1,0 +1,957 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>guyfat-e</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎧</text></svg>">
+<style>
+  :root {
+    --bg: #0c0e14; --panel: #151821; --panel2: #1d212c; --panel3: #262b38; --line: #2a2f3d;
+    --text: #eceef4; --muted: #8c93a6; --accent: #7c6cff; --accent2: #4fa3ff; --green: #3ddc84;
+    --red: #f0544f; --yellow: #f2b84b;
+    --grad: linear-gradient(135deg, var(--accent), var(--accent2));
+    --shadow: 0 18px 50px rgba(0, 0, 0, .45);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    color: var(--text); font: 15px/1.45 "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    background:
+      radial-gradient(900px 520px at 12% -10%, rgba(124, 108, 255, .20), transparent 60%),
+      radial-gradient(800px 520px at 100% 110%, rgba(79, 163, 255, .14), transparent 60%),
+      var(--bg);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, select { font: inherit; color: inherit; }
+  .hidden { display: none !important; }
+  ::selection { background: rgba(124, 108, 255, .45); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--panel3); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* Giriş */
+  #join { min-height: 100%; display: grid; place-items: center; padding: 24px 16px; }
+  .card {
+    width: 100%; max-width: 430px; background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0) 140px), var(--panel);
+    border: 1px solid var(--line); border-radius: 20px; padding: 28px; box-shadow: var(--shadow);
+    animation: rise .35s ease-out both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .card h1 { margin: 0 0 6px; font-size: 26px; display: flex; align-items: center; gap: 12px; letter-spacing: -.02em; }
+  .card h1 .logo {
+    width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 22px;
+    background: var(--grad); box-shadow: 0 8px 22px rgba(124, 108, 255, .45);
+  }
+  .card h1 .word { font-weight: 800; }
+  .card h1 .word i { font-style: normal; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .card p.sub { margin: 0 0 22px; color: var(--muted); font-size: 14px; }
+  label { display: block; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 16px 0 6px; }
+  label .hint { text-transform: none; letter-spacing: 0; font-weight: 400; }
+  dialog label:has(input[type=checkbox]) { text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 400; color: var(--text); display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
+  input[type=text], input[type=password], select {
+    width: 100%; padding: 11px 13px; background: var(--panel2); border: 1px solid var(--line);
+    border-radius: 10px; outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  input::placeholder { color: #626a7e; }
+  input[type=text]:focus, input[type=password]:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124, 108, 255, .22); }
+  .btn {
+    border: 1px solid var(--line); border-radius: 10px; padding: 9px 14px; background: var(--panel2); cursor: pointer;
+    transition: background .15s, border-color .15s, transform .08s, filter .15s;
+  }
+  .btn:hover { background: var(--panel3); border-color: #3a4154; }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btn:focus-visible, .roomitem:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn.primary { background: var(--grad); border: 0; color: #fff; width: 100%; margin-top: 20px; padding: 12px 14px; font-weight: 700; box-shadow: 0 8px 22px rgba(124, 108, 255, .35); }
+  .btn.primary:hover { filter: brightness(1.1); }
+  .btn.danger { background: rgba(240, 84, 79, .14); border-color: rgba(240, 84, 79, .45); color: #ff8f8b; }
+  .btn.danger:hover { background: var(--red); color: #fff; }
+  .btn.on { background: var(--red); border-color: var(--red); color: #fff; }
+  .err { color: #ff8f8b; font-size: 14px; margin-top: 12px; min-height: 1em; }
+
+  /* Oda listesi (giriş ekranı) */
+  .roomlist { display: flex; flex-direction: column; gap: 10px; }
+  .roomitem {
+    display: block; width: 100%; text-align: left; background: var(--panel2); border: 1px solid var(--line);
+    border-radius: 14px; padding: 12px 14px; cursor: pointer; position: relative; overflow: hidden;
+    transition: border-color .15s, background .15s, transform .12s, box-shadow .15s;
+  }
+  .roomitem::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--grad); opacity: 0; transition: opacity .15s; }
+  .roomitem:hover { border-color: var(--accent); background: var(--panel3); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0, 0, 0, .3); }
+  .roomitem:hover::before, .roomitem.live::before { opacity: 1; }
+  .roomitem .rn { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+  .roomitem .rn .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .roomitem .rn .cnt { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--green); flex: none; display: flex; align-items: center; gap: 6px; }
+  .roomitem .rn .cnt:not(:empty)::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(61, 220, 132, .18); }
+  .roomitem .members { margin: 10px 0 2px 4px; display: flex; flex-direction: column; gap: 7px; }
+  .roomitem .m { display: flex; align-items: center; gap: 9px; font-size: 14px; color: #cfd3de; }
+  .roomitem .m .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .roomitem .m .dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; flex: none; }
+  .roomitem .empty { margin: 6px 0 0 2px; font-size: 12.5px; color: var(--muted); }
+  .authbox { background: var(--panel2); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .authrow { display: flex; gap: 8px; margin-top: 10px; }
+  .authrow input { flex: 1; min-width: 0; background: var(--panel); }
+  .authbox .err { margin-top: 8px; min-height: 0; }
+  details.more { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+  details.more summary { cursor: pointer; color: var(--muted); font-size: 14px; border-radius: 6px; user-select: none; }
+  details.more summary:hover { color: var(--text); }
+
+  /* Oda */
+  #room { min-height: 100%; display: flex; flex-direction: column; }
+  header {
+    display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap;
+    background: rgba(21, 24, 33, .78); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 2;
+  }
+  header .title { font-weight: 800; font-size: 18px; letter-spacing: -.01em; }
+  header .status { color: var(--green); font-size: 12px; font-weight: 600; background: rgba(61, 220, 132, .12); border: 1px solid rgba(61, 220, 132, .25); padding: 3px 10px; border-radius: 999px; }
+  header .status:empty { display: none; }
+  header .spacer { flex: 1; }
+  main { flex: 1; padding: 20px 18px; display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); align-content: start; width: 100%; max-width: 1100px; margin: 0 auto; }
+  .user {
+    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0) 90px), var(--panel);
+    border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+    transition: border-color .12s, box-shadow .12s; animation: rise .25s ease-out both;
+  }
+  .user.speaking { border-color: rgba(61, 220, 132, .6); box-shadow: 0 0 0 1px rgba(61, 220, 132, .25), 0 10px 28px rgba(61, 220, 132, .10); }
+  .user .top { display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 20px; color: #fff; flex: none; box-shadow: 0 0 0 3px transparent; transition: box-shadow .08s; }
+  .user.speaking .avatar { box-shadow: 0 0 0 3px var(--green), 0 0 18px rgba(61, 220, 132, .55); }
+  .user .name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .user .meta, .user .you { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .user .icons { margin-left: auto; display: flex; gap: 4px; font-size: 16px; }
+  .vol { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  .vol input { flex: 1; accent-color: var(--accent); }
+  .vol span { min-width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+
+  footer {
+    border-top: 1px solid var(--line); background: rgba(21, 24, 33, .9); backdrop-filter: blur(12px);
+    padding: 12px 18px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center;
+    position: sticky; bottom: 0;
+  }
+  footer .group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  footer .btn { padding: 10px 16px; border-radius: 999px; font-weight: 600; }
+  footer select { width: auto; padding: 9px 12px; border-radius: 999px; }
+  .meter { width: 130px; height: 8px; background: var(--panel3); border-radius: 4px; position: relative; overflow: hidden; }
+  .meter .lvl { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, var(--green), #9af0bf); transition: width .05s; }
+  .meter .thr { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--yellow); }
+  .hint { font-size: 12.5px; color: var(--muted); }
+  #sens { width: 120px; accent-color: var(--yellow); }
+
+  dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 18px; padding: 24px; width: min(440px, calc(100% - 32px)); box-shadow: var(--shadow); }
+  dialog::backdrop { background: rgba(6, 8, 12, .7); backdrop-filter: blur(3px); }
+  dialog h2 { margin: 0 0 4px; font-size: 19px; }
+  .row { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+  #toast {
+    position: fixed; left: 50%; bottom: 92px; transform: translate(-50%, 8px); background: var(--panel3); border: 1px solid #3a4154;
+    padding: 9px 16px; border-radius: 999px; font-size: 14px; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .4); max-width: calc(100% - 32px); z-index: 5;
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .desk-only { display: none; }
+  body.desktop .desk-only { display: block; }
+  .hostbox { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .hostbox .btn { width: 100%; margin-top: 8px; }
+  #hostInfo { margin-top: 8px; word-break: break-all; }
+  #hostInfo b { color: var(--text); }
+  #hostInfo .copy { padding: 2px 8px; margin-left: 4px; font-size: 12px; }
+  @media (max-width: 600px) {
+    .meter, #sens { width: 80px; }
+    .card { padding: 22px 18px; }
+    header .btn { padding: 8px 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<section id="join">
+  <form class="card" id="joinForm">
+    <h1><span class="logo">🎧</span><span class="word">guyfat<i>-e</i></span></h1>
+    <p class="sub">Oyun oynarken arkadaşlarınla konuş. Ses doğrudan aranızda iletilir.</p>
+    <label for="name">Takma adın</label>
+    <input type="text" id="name" maxlength="24" required autocomplete="nickname">
+    <label>Odalar <span class="hint">· girmek için tıkla</span></label>
+    <div id="roomList" class="roomlist"><div class="hint">Odalar yükleniyor…</div></div>
+    <div class="err" id="joinErr"></div>
+    <details class="more" id="more">
+      <summary>Başka bir oda aç</summary>
+      <label for="roomName">Oda adı</label>
+      <input type="text" id="roomName" maxlength="40" placeholder="ör. valorant-ekip">
+      <label for="password">Oda şifresi (isteğe bağlı)</label>
+      <input type="password" id="password" maxlength="64" placeholder="Odayı ilk kuran belirler">
+      <div class="desk-only">
+        <label for="server">Sunucu adresi (değiştirmene gerek yok)</label>
+        <input type="text" id="server" placeholder="sesli-sohbet-ssnz.onrender.com" spellcheck="false">
+      </div>
+      <button class="btn primary" type="submit" id="joinBtn">Odaya katıl</button>
+      <div class="desk-only hostbox">
+        <div class="hint">Ortak sunucu her zaman açık, bunu kullanmana gerek yok. Yine de kendi bilgisayarında sunucu açmak istersen:</div>
+        <button class="btn" type="button" id="hostBtn">🖥️ Bu bilgisayarda sunucu aç</button>
+        <div id="hostInfo" class="hint"></div>
+      </div>
+    </details>
+  </form>
+</section>
+
+<section id="room" class="hidden">
+  <header>
+    <span class="title" id="roomTitle"></span>
+    <span class="status" id="connStatus"></span>
+    <span class="spacer"></span>
+    <button class="btn" id="inviteBtn" title="Davet linkini kopyala">🔗 Davet</button>
+    <button class="btn" id="settingsBtn" title="Ses ayarları">⚙️ Ayarlar</button>
+    <button class="btn danger" id="leaveBtn">Ayrıl</button>
+  </header>
+
+  <main id="users"></main>
+
+  <footer>
+    <div class="group">
+      <button class="btn" id="muteBtn" title="Mikrofonu kapat (M, programda her yerde: Ctrl+Shift+M)">🎙️ Mikrofon</button>
+      <button class="btn" id="deafBtn" title="Sesi kapat (D, programda her yerde: Ctrl+Shift+D)">🔊 Ses</button>
+    </div>
+    <div class="group">
+      <select id="mode" title="Mikrofon modu">
+        <option value="vad">Ses algılama</option>
+        <option value="open">Hep açık</option>
+      </select>
+      <span id="vadBox" class="group">
+        <div class="meter" title="Mikrofon seviyesi / eşik"><div class="lvl" id="lvl"></div><div class="thr" id="thr"></div></div>
+        <input type="range" id="sens" min="-70" max="-20" step="1" title="Hassasiyet eşiği">
+      </span>
+    </div>
+  </footer>
+</section>
+
+<dialog id="settings">
+  <h2>Ses ayarları</h2>
+  <label for="inDev">Mikrofon</label>
+  <select id="inDev"></select>
+  <label for="outDev">Hoparlör / kulaklık</label>
+  <select id="outDev"></select>
+  <label><input type="checkbox" id="noiseSup"> Gürültü engelleme + yankı giderme</label>
+  <label><input type="checkbox" id="sounds"> Giriş/çıkış sesleri</label>
+  <div class="row"><button class="btn" id="closeSettings">Kapat</button></div>
+</dialog>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const desk = window.desktop || null; // masaüstü programında dolu gelir
+if (desk) document.body.classList.add('desktop');
+
+// ---------- Kalıcı ayarlar ----------
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('ss.' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('ss.' + k, JSON.stringify(v)); } catch {} },
+};
+// Her zaman açık ortak sunucu (Render). Boşsa ya da eski geçici adresse bu kullanılır.
+const DEFAULT_SERVER = 'https://sesli-sohbet-ssnz.onrender.com';
+function savedServer() {
+  const s = String(store.get('server', '') || '').trim();
+  if (!s || /trycloudflare\.com|localhost|127\.0\.0\.1/i.test(s)) return DEFAULT_SERVER;
+  return s;
+}
+const settings = {
+  mode: store.get('mode', 'vad') === 'open' ? 'open' : 'vad',
+  sens: store.get('sens', -50),
+  server: savedServer(),
+  inDev: store.get('inDev', ''),
+  outDev: store.get('outDev', ''),
+  noiseSup: store.get('noiseSup', true),
+  sounds: store.get('sounds', true),
+  volumes: store.get('volumes', {}), // isim -> 0..2
+};
+
+// ---------- Durum ----------
+let ws, myId, myName, roomName, roomPass, iceServers = [];
+let audioCtx, micStream, micSource, gateNode, sendTrack;
+let muted = false, deafened = false, leaving = false, reconnectTimer = null;
+const peers = new Map(); // id -> peer
+
+// ---------- Ses kapısı (AudioWorklet: arka planda da çalışır) ----------
+const WORKLET = `
+class Gate extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.mode = 'vad'; this.thr = -50; this.muted = false;
+    this.gain = 0; this.hold = 0; this.level = -100; this.tick = 0;
+    this.port.onmessage = (e) => Object.assign(this, e.data);
+  }
+  process(inputs, outputs) {
+    const inp = inputs[0][0], out = outputs[0][0];
+    if (!out) return true;
+    let sum = 0;
+    if (inp) for (let i = 0; i < inp.length; i++) sum += inp[i] * inp[i];
+    const rms = inp ? Math.sqrt(sum / inp.length) : 0;
+    const db = rms > 0 ? 20 * Math.log10(rms) : -100;
+    this.level = Math.max(db, this.level - 1.5);
+    let open;
+    if (this.muted) open = false;
+    else if (this.mode === 'open') open = true;
+    else {
+      if (db > this.thr) this.hold = Math.round(0.35 * sampleRate / 128);
+      else if (this.hold > 0) this.hold--;
+      open = this.hold > 0;
+    }
+    const target = open ? 1 : 0;
+    const step = open ? 0.25 : 0.02; // hızlı aç, yumuşak kapat
+    for (let i = 0; i < out.length; i++) {
+      this.gain += (target - this.gain) * step;
+      out[i] = inp ? inp[i] * this.gain : 0;
+    }
+    for (let c = 1; c < outputs[0].length; c++) outputs[0][c].set(out);
+    if (++this.tick % 8 === 0) this.port.postMessage({ level: this.level, open });
+    return true;
+  }
+}
+registerProcessor('gate', Gate);`;
+
+async function setupAudio() {
+  audioCtx = new AudioContext({ latencyHint: 'interactive' });
+  const url = URL.createObjectURL(new Blob([WORKLET], { type: 'text/javascript' }));
+  await audioCtx.audioWorklet.addModule(url);
+  gateNode = new AudioWorkletNode(audioCtx, 'gate', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1] });
+  const dest = audioCtx.createMediaStreamDestination();
+  gateNode.connect(dest);
+  sendTrack = dest.stream.getAudioTracks()[0];
+  gateNode.port.onmessage = (e) => onLocalLevel(e.data);
+  pushGate();
+  await openMic();
+}
+
+async function openMic() {
+  const audio = {
+    echoCancellation: settings.noiseSup,
+    noiseSuppression: settings.noiseSup,
+    autoGainControl: true,
+    channelCount: 1,
+  };
+  if (settings.inDev) audio.deviceId = { exact: settings.inDev };
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio });
+  } catch (e) {
+    if (settings.inDev && e.name === 'OverconstrainedError') {
+      settings.inDev = ''; store.set('inDev', '');
+      delete audio.deviceId;
+      stream = await navigator.mediaDevices.getUserMedia({ audio });
+    } else throw e;
+  }
+  if (micSource) micSource.disconnect();
+  if (micStream) micStream.getTracks().forEach((t) => t.stop());
+  micStream = stream;
+  micSource = audioCtx.createMediaStreamSource(stream);
+  micSource.connect(gateNode);
+  // Mikrofon çıkarılırsa (kulaklık söküldü vb.) varsayılan mikrofona geç
+  const track = stream.getAudioTracks()[0];
+  if (track) track.onended = () => {
+    if (micStream !== stream || leaving) return;
+    settings.inDev = '';
+    openMic().then(() => toast('Mikrofon çıkarıldı, varsayılan mikrofona geçildi'))
+      .catch(() => toast('Mikrofon bağlantısı kesildi. Ayarlardan mikrofon seç.'));
+  };
+}
+
+function pushGate() {
+  if (!gateNode) return;
+  gateNode.port.postMessage({ mode: settings.mode, thr: settings.sens, muted: muted || deafened });
+  if (sendTrack) sendTrack.enabled = !(muted || deafened);
+}
+
+let lastSpeaking = false;
+function onLocalLevel({ level, open }) {
+  const pct = Math.max(0, Math.min(100, ((level + 70) / 50) * 100));
+  $('lvl').style.width = pct + '%';
+  $('lvl').style.background = open ? 'var(--green)' : 'var(--muted)';
+  if (open !== lastSpeaking) {
+    lastSpeaking = open;
+    const el = document.querySelector(`.user[data-id="${myId}"]`);
+    if (el) el.classList.toggle('speaking', open);
+  }
+}
+
+// ---------- Bildirim sesleri ----------
+function beep(up) {
+  if (!settings.sounds || !audioCtx || deafened) return;
+  const t = audioCtx.currentTime;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(up ? 520 : 660, t);
+  o.frequency.setValueAtTime(up ? 780 : 440, t + 0.09);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.12, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(t); o.stop(t + 0.25);
+}
+
+// ---------- Sinyal sunucusu ----------
+let hostState = null;
+function serverBase() {
+  if (!desk) return location.origin;
+  let s = settings.server.trim();
+  if (!/^https?:\/\//i.test(s)) s = (/^(localhost|127\.|192\.168\.|10\.|172\.)/.test(s) ? 'http://' : 'https://') + s;
+  try { return new URL(s).origin; } catch { return s; }
+}
+function inviteLink() {
+  const base = desk ? (hostState?.publicUrl || serverBase()) : location.origin + location.pathname.replace(/index\.html$/, '');
+  return `${base.replace(/\/$/, '')}/?oda=${encodeURIComponent(roomName)}`;
+}
+function connect() {
+  // Olaylar bu sokete bağlı: eski bir soketin geç gelen kapanışı yeni oturumu bozamaz.
+  const sock = new WebSocket(serverBase().replace(/^http/i, 'ws'));
+  ws = sock;
+  setStatus('Bağlanıyor…');
+  sock.onopen = () => sock.send(JSON.stringify({ type: 'join', room: roomName, name: myName, password: roomPass, code: store.get('code', '') }));
+  sock.onmessage = (e) => { if (ws === sock) handle(JSON.parse(e.data)); };
+  sock.onclose = () => {
+    if (ws !== sock) return;
+    closeAllPeers();
+    if (leaving) return;
+    setStatus('Bağlantı koptu, yeniden bağlanılıyor…');
+    clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(connect, 2000);
+  };
+}
+// Odadan çık: soketi ve bağlantıları kapat, mikrofonu bırak, giriş ekranına dön.
+function leaveRoom(err) {
+  leaving = true; clearTimeout(reconnectTimer);
+  if (ws) { ws.onclose = null; ws.onmessage = null; try { ws.close(); } catch {} ws = null; }
+  closeAllPeers();
+  if (micSource) { micSource.disconnect(); micSource = null; }
+  if (micStream) { micStream.getTracks().forEach((t) => { t.onended = null; t.stop(); }); micStream = null; }
+  audioCtx?.suspend().catch(() => {});
+  showJoin(err);
+  if (!desk) history.replaceState(null, '', location.pathname);
+  document.title = 'guyfat-e';
+  syncDesktop();
+}
+function sig(to, data) { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'signal', to, data })); }
+function sendState() { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'state', muted, deafened })); }
+
+async function handle(msg) {
+  switch (msg.type) {
+    case 'error':
+      // Sunucu yalnızca odaya giriş reddedilince hata yollar (şifre yanlış, oda dolu): giriş ekranına dön.
+      leaveRoom(msg.message);
+      break;
+    case 'joined':
+      myId = msg.id;
+      showRoom();
+      renderSelf();
+      for (const p of msg.peers) createPeer(p, true);
+      sendState();
+      updateStatus();
+      syncDesktop();
+      break;
+    case 'peer-joined':
+      createPeer(msg.peer, false);
+      beep(true);
+      toast(`${msg.peer.name} katıldı`);
+      updateStatus();
+      break;
+    case 'peer-left': {
+      const p = peers.get(msg.id);
+      if (p) { toast(`${p.name} ayrıldı`); beep(false); removePeer(msg.id); }
+      updateStatus();
+      break;
+    }
+    case 'peer-state': {
+      const p = peers.get(msg.id);
+      if (p) { p.muted = msg.muted; p.deafened = msg.deafened; renderPeerIcons(p); }
+      break;
+    }
+    case 'signal':
+      await onSignal(msg.from, msg.data);
+      break;
+  }
+}
+
+// ---------- WebRTC ----------
+// Yeni katılan taraf her zaman teklif (offer) gönderir; böylece çakışma olmaz.
+function createPeer(info, initiator) {
+  if (peers.has(info.id)) return peers.get(info.id);
+  const pc = new RTCPeerConnection({ iceServers });
+  const p = { ...info, pc, initiator, pending: [], audio: new Audio(), analyser: null, rtt: null };
+  p.audio.autoplay = true;
+  peers.set(info.id, p);
+
+  pc.addTrack(sendTrack, new MediaStream([sendTrack]));
+  pc.onicecandidate = (e) => { if (e.candidate) sig(p.id, { candidate: e.candidate }); };
+  pc.ontrack = (e) => {
+    const stream = e.streams[0] || new MediaStream([e.track]);
+    p.audio.srcObject = stream;
+    applyOutput(p);
+    p.audio.play().catch(() => {
+      // Tarayıcı sesi kendiliğinden başlatmadıysa ilk tıklamada başlat
+      toast('Sesi başlatmak için pencereye tıkla');
+      document.addEventListener('click', () => p.audio.play().catch(() => {}), { once: true });
+    });
+    try {
+      p.src?.disconnect();
+      p.src = audioCtx.createMediaStreamSource(stream);
+      p.analyser = audioCtx.createAnalyser();
+      p.analyser.fftSize = 512;
+      p.src.connect(p.analyser);
+      p.buf = new Float32Array(p.analyser.fftSize);
+    } catch {}
+  };
+  pc.onconnectionstatechange = () => {
+    renderPeerIcons(p);
+    clearTimeout(p.retry);
+    // Bağlantı koptuysa düzelene kadar 5 saniyede bir yeniden dene
+    const retry = () => {
+      if (peers.get(p.id) !== p || pc.connectionState !== 'failed') return;
+      negotiate(p, true);
+      p.retry = setTimeout(retry, 5000);
+    };
+    if (pc.connectionState === 'failed' && p.initiator) retry();
+  };
+  renderPeer(p);
+  if (initiator) negotiate(p, false);
+  return p;
+}
+
+async function negotiate(p, iceRestart) {
+  try {
+    const offer = await p.pc.createOffer({ iceRestart });
+    await p.pc.setLocalDescription(offer);
+    sig(p.id, { sdp: p.pc.localDescription });
+  } catch (e) { console.warn('offer hatası', e); }
+}
+
+async function onSignal(from, data) {
+  let p = peers.get(from);
+  if (!p) p = createPeer({ id: from, name: '…', muted: false, deafened: false }, false);
+  const pc = p.pc;
+  try {
+    if (data.sdp) {
+      await pc.setRemoteDescription(data.sdp);
+      if (data.sdp.type === 'offer') {
+        await pc.setLocalDescription(await pc.createAnswer());
+        sig(from, { sdp: pc.localDescription });
+      }
+      for (const c of p.pending.splice(0)) await pc.addIceCandidate(c).catch(() => {});
+    } else if (data.candidate) {
+      if (pc.remoteDescription) await pc.addIceCandidate(data.candidate).catch(() => {});
+      else p.pending.push(data.candidate);
+    }
+  } catch (e) { console.warn('sinyal hatası', e); }
+}
+
+function removePeer(id) {
+  const p = peers.get(id);
+  if (!p) return;
+  clearTimeout(p.retry);
+  p.pc.close();
+  p.audio.srcObject = null;
+  try { p.src?.disconnect(); } catch {}
+  peers.delete(id);
+  document.querySelector(`.user[data-id="${id}"]`)?.remove();
+}
+function closeAllPeers() { for (const id of [...peers.keys()]) removePeer(id); }
+
+function applyOutput(p) {
+  const v = settings.volumes[p.name] ?? 1;
+  p.audio.volume = Math.min(1, v);
+  p.audio.muted = deafened;
+  if (settings.outDev && p.audio.setSinkId) p.audio.setSinkId(settings.outDev).catch(() => {});
+}
+
+// Konuşma göstergesi + ping
+setInterval(() => {
+  for (const p of peers.values()) {
+    if (!p.analyser) continue;
+    p.analyser.getFloatTimeDomainData(p.buf);
+    let s = 0; for (const x of p.buf) s += x * x;
+    const speaking = Math.sqrt(s / p.buf.length) > 0.01;
+    document.querySelector(`.user[data-id="${p.id}"]`)?.classList.toggle('speaking', speaking);
+  }
+}, 100);
+setInterval(async () => {
+  for (const p of peers.values()) {
+    if (p.pc.connectionState !== 'connected') continue;
+    try {
+      const stats = await p.pc.getStats();
+      stats.forEach((r) => {
+        if (r.type === 'candidate-pair' && r.nominated && r.state === 'succeeded' && r.currentRoundTripTime != null)
+          p.rtt = Math.round(r.currentRoundTripTime * 1000);
+      });
+      renderPeerIcons(p);
+    } catch {}
+  }
+}, 2000);
+
+// ---------- Arayüz ----------
+const COLORS = ['#5b8cff', '#e5739a', '#3ecf6e', '#f2b84b', '#a77bff', '#2ec4c9', '#ff8a4c', '#8bc34a'];
+function colorFor(name) { let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; }
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+function userCard(id, name, isMe) {
+  const el = document.createElement('div');
+  el.className = 'user';
+  el.dataset.id = id;
+  el.innerHTML = `
+    <div class="top">
+      <div class="avatar" style="background:${colorFor(name)}">${esc(name[0]?.toUpperCase() || '?')}</div>
+      <div style="min-width:0">
+        <div class="name">${esc(name)}${isMe ? ' <span class="you">(sen)</span>' : ''}</div>
+        <div class="meta st"></div>
+      </div>
+      <div class="icons"></div>
+    </div>`;
+  return el;
+}
+
+function renderSelf() {
+  $('users').innerHTML = '';
+  $('users').append(userCard(myId, myName, true));
+  renderSelfIcons();
+}
+function renderSelfIcons() {
+  const el = document.querySelector(`.user[data-id="${myId}"]`);
+  if (!el) return;
+  el.querySelector('.icons').textContent = (muted ? '🔇' : '') + (deafened ? '🙉' : '');
+  el.querySelector(".st").textContent = { vad: 'Ses algılama', open: 'Hep açık' }[settings.mode];
+}
+
+function renderPeer(p) {
+  const el = userCard(p.id, p.name, false);
+  const v = settings.volumes[p.name] ?? 1;
+  const vol = document.createElement('div');
+  vol.className = 'vol';
+  vol.innerHTML = `🔈<input type="range" min="0" max="100" value="${Math.round(Math.min(1, v) * 100)}" title="Bu kişinin ses seviyesi"><span>${Math.round(Math.min(1, v) * 100)}%</span>`;
+  const range = vol.querySelector('input');
+  range.oninput = () => {
+    const val = range.value / 100;
+    settings.volumes[p.name] = val; store.set('volumes', settings.volumes);
+    vol.querySelector('span').textContent = range.value + '%';
+    p.audio.volume = val;
+  };
+  el.append(vol);
+  $('users').append(el);
+  renderPeerIcons(p);
+}
+
+function renderPeerIcons(p) {
+  const el = document.querySelector(`.user[data-id="${p.id}"]`);
+  if (!el) return;
+  el.querySelector('.icons').textContent = (p.muted ? '🔇' : '') + (p.deafened ? '🙉' : '');
+  const st = p.pc.connectionState;
+  const txt = {
+    new: 'Bağlanıyor…', connecting: 'Bağlanıyor…', disconnected: 'Bağlantı zayıf…',
+    failed: 'Bağlanamadı (TURN gerekebilir)', closed: 'Kapalı',
+  }[st] || (p.rtt != null ? `Ping: ${p.rtt} ms` : 'Bağlı');
+  el.querySelector(".st").textContent = txt;
+  el.querySelector(".st").style.color = st === 'failed' ? 'var(--red)' : '';
+}
+
+function updateStatus() { setStatus(`${peers.size + 1} kişi`); }
+function setStatus(t) { $('connStatus').textContent = t; }
+
+let toastTimer;
+function toast(t) {
+  $('toast').textContent = t; $('toast').classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2200);
+}
+
+// ---------- Oda listesi (lobi) ----------
+// Giriş ekranındayken sunucudan odaları ve içindekileri canlı alır.
+let lobbyWs = null, lobbyTimer = null, lobbyOn = false;
+function lobbyColor(name) {
+  let h = 0;
+  for (const c of String(name)) h = (h * 31 + c.codePointAt(0)) % 360;
+  return `hsl(${h} 55% 45%)`;
+}
+function renderRooms(rooms) {
+  const el = $('roomList');
+  if (!rooms.length) { el.innerHTML = '<div class="hint">Henüz oda yok. Aşağıdan bir oda açabilirsin.</div>'; return; }
+  el.innerHTML = rooms.map((r) => {
+    const members = r.peers.length
+      ? '<div class="members">' + r.peers.map((p) =>
+          `<div class="m"><span class="dot" style="background:${lobbyColor(p.name)}">${esc([...p.name][0]?.toUpperCase() || '?')}</span>` +
+          `<span class="nm">${esc(p.name)}</span>${p.deafened ? ' 🙉' : p.muted ? ' 🔇' : ''}</div>`).join('') + '</div>'
+      : '<div class="empty">Kimse yok. İlk giren sen ol.</div>';
+    return `<button type="button" class="roomitem${r.peers.length ? ' live' : ''}" data-room="${esc(r.name)}" data-locked="${r.locked ? 1 : ''}">` +
+      `<div class="rn"><span>🔊</span><span class="nm">${esc(r.name)}</span>${r.locked ? '<span title="Şifreli">🔒</span>' : ''}` +
+      `<span class="cnt">${r.peers.length ? r.peers.length + ' kişi' : ''}</span></div>${members}</button>`;
+  }).join('');
+}
+// Sunucu giriş kodu istiyorsa oda listesi yerine kod kutusu göster
+function renderAuth(message) {
+  $('roomList').innerHTML =
+    '<div class="authbox"><div class="hint">🔒 Odaları görmek için giriş kodunu yaz.</div>' +
+    '<div class="authrow"><input type="password" id="codeInput" inputmode="numeric" maxlength="64" placeholder="Giriş kodu" autocomplete="off">' +
+    '<button type="button" class="btn" id="codeBtn">Giriş</button></div>' +
+    `<div class="err" id="codeErr">${esc(message || '')}</div></div>`;
+  if (message) $('codeInput').focus();
+}
+function submitCode() {
+  const code = $('codeInput').value.trim();
+  if (!code) return;
+  store.set('code', code);
+  if (lobbyWs && lobbyWs.readyState === 1) lobbyWs.send(JSON.stringify({ type: 'lobby', code }));
+  else startLobby();
+}
+function startLobby() {
+  lobbyOn = true;
+  clearTimeout(lobbyTimer);
+  if (lobbyWs) { lobbyWs.onclose = null; lobbyWs.close(); lobbyWs = null; }
+  let sock;
+  try { sock = new WebSocket(serverBase().replace(/^http/i, 'ws')); } catch { return; }
+  lobbyWs = sock;
+  const slow = setTimeout(() => {
+    if (lobbyWs === sock && sock.readyState !== 1) $('roomList').innerHTML = '<div class="hint">⏳ Sunucu uyanıyor, bu bir dakika kadar sürebilir…</div>';
+  }, 3000);
+  sock.onopen = () => { clearTimeout(slow); sock.send(JSON.stringify({ type: 'lobby', code: store.get('code', '') })); };
+  sock.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'rooms') renderRooms(msg.rooms);
+      else if (msg.type === 'auth') renderAuth(msg.message);
+    } catch {}
+  };
+  sock.onclose = () => {
+    clearTimeout(slow);
+    if (lobbyWs !== sock) return;
+    lobbyWs = null;
+    if (lobbyOn) lobbyTimer = setTimeout(startLobby, 3000);
+  };
+}
+function stopLobby() {
+  lobbyOn = false;
+  clearTimeout(lobbyTimer);
+  if (lobbyWs) { lobbyWs.onclose = null; lobbyWs.close(); lobbyWs = null; }
+}
+$('roomList').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.id === 'codeInput') { e.preventDefault(); submitCode(); }
+});
+$('roomList').addEventListener('click', (e) => {
+  if (e.target.id === 'codeBtn') { submitCode(); return; }
+  const item = e.target.closest('.roomitem');
+  if (!item || $('joinBtn').disabled) return;
+  $('roomName').value = item.dataset.room;
+  if (item.dataset.locked) {
+    // Şifreli oda: şifreyi sor
+    $('more').open = true;
+    $('password').value = '';
+    $('password').focus();
+    $('joinErr').textContent = 'Bu oda şifreli. Şifreyi yazıp "Odaya katıl"a bas.';
+    return;
+  }
+  $('password').value = '';
+  if (!$('name').value.trim()) { $('joinErr').textContent = 'Önce takma adını yaz.'; $('name').focus(); return; }
+  $('joinForm').requestSubmit();
+});
+
+function showRoom() {
+  stopLobby();
+  $('join').classList.add('hidden'); $('room').classList.remove('hidden');
+  $('roomTitle').textContent = '# ' + roomName;
+  if (!desk) history.replaceState(null, '', '?oda=' + encodeURIComponent(roomName));
+  document.title = `${roomName} · guyfat-e`;
+}
+function showJoin(err) {
+  $('room').classList.add('hidden'); $('join').classList.remove('hidden');
+  $('joinErr').textContent = err || '';
+  $('joinBtn').disabled = false;
+  myId = null;
+  startLobby();
+}
+
+function renderControls() {
+  $('mode').value = settings.mode;
+  $('sens').value = settings.sens;
+  $('thr').style.left = ((settings.sens + 70) / 50) * 100 + '%';
+  $('vadBox').classList.toggle('hidden', settings.mode !== 'vad');
+  $('muteBtn').classList.toggle('on', muted);
+  $('muteBtn').textContent = muted ? '🔇 Mikrofon kapalı' : '🎙️ Mikrofon';
+  $('deafBtn').classList.toggle('on', deafened);
+  $('deafBtn').textContent = deafened ? '🙉 Ses kapalı' : '🔊 Ses';
+  renderSelfIcons();
+  syncDesktop();
+}
+function syncDesktop() {
+  if (!desk) return;
+  desk.setState({ muted, deafened, room: myId ? roomName : null });
+}
+
+// ---------- Olaylar ----------
+$('name').value = store.get('name', '');
+$('roomName').value = new URLSearchParams(location.search).get('oda') || store.get('room', '');
+
+$('joinForm').onsubmit = async (e) => {
+  e.preventDefault();
+  $('joinErr').textContent = '';
+  myName = $('name').value.trim();
+  roomName = $('roomName').value.trim().toLowerCase();
+  roomPass = $('password').value;
+  if (desk) {
+    let srv = $('server').value.trim();
+    // Davet linki yapıştırıldıysa oda adını da al, sadece sunucu kısmını sakla
+    try {
+      const u = new URL(/^https?:\/\//i.test(srv) ? srv : (/^(localhost|127\.|192\.168\.|10\.|172\.)/.test(srv) ? 'http://' : 'https://') + srv);
+      const o = u.searchParams.get('oda');
+      if (o && !$('roomName').value.trim()) { roomName = o.toLowerCase(); $('roomName').value = roomName; }
+      srv = u.origin;
+    } catch {}
+    if (!srv) srv = DEFAULT_SERVER;
+    settings.server = srv; store.set('server', srv); $('server').value = srv;
+  }
+  if (!roomName) { $('more').open = true; $('joinErr').textContent = 'Listeden bir odaya tıkla ya da oda adı yaz.'; return; }
+  if (!myName || !roomName) { $('joinErr').textContent = 'Takma ad ve oda adı gerekli.'; return; }
+  store.set('name', myName); store.set('room', roomName);
+  $('joinBtn').disabled = true;
+  try {
+    if (!window.isSecureContext) throw new Error('Mikrofon için sayfa HTTPS üzerinden açılmalı (veya localhost).');
+    // Ücretsiz sunucu bir süre kullanılmayınca uyur; ilk girişte uyanması ~1 dakika sürebilir.
+    const wakeMsg = setTimeout(() => { $('joinErr').textContent = '⏳ Sunucu uyanıyor, bu bir dakika kadar sürebilir…'; }, 2500);
+    const ctrl = new AbortController();
+    const abortT = setTimeout(() => ctrl.abort(), 120000);
+    try {
+      iceServers = (await (await fetch(serverBase() + '/config', { signal: ctrl.signal })).json()).iceServers;
+    } catch {
+      throw new Error('Sunucuya ulaşılamadı. İnternet bağlantını kontrol edip tekrar dene.');
+    } finally {
+      clearTimeout(wakeMsg); clearTimeout(abortT);
+      $('joinErr').textContent = '';
+    }
+    if (!audioCtx) await setupAudio();
+    else { await audioCtx.resume(); await openMic(); } // odadan çıkınca mikrofon bırakılmıştı
+    leaving = false;
+    renderControls();
+    connect();
+  } catch (err) {
+    console.error(err);
+    const m = err.name === 'NotAllowedError' ? 'Mikrofon izni verilmedi. Tarayıcı adres çubuğundan izin verip tekrar dene.'
+      : err.name === 'NotFoundError' ? 'Mikrofon bulunamadı.' : (err.message || String(err));
+    $('joinErr').textContent = m;
+    $('joinBtn').disabled = false;
+  }
+};
+
+$('leaveBtn').onclick = () => leaveRoom();
+
+$('inviteBtn').onclick = async () => {
+  const link = inviteLink();
+  try { await navigator.clipboard.writeText(link); toast('Davet linki kopyalandı: tarayıcıda açılabilir ya da programa sunucu adresi olarak yapıştırılabilir'); }
+  catch { prompt('Davet linki:', link); }
+};
+
+function toggleMute() {
+  if (deafened) { deafened = false; muted = false; }
+  else muted = !muted;
+  afterToggle();
+}
+function toggleDeaf() {
+  deafened = !deafened;
+  afterToggle();
+}
+function afterToggle() {
+  pushGate();
+  for (const p of peers.values()) p.audio.muted = deafened;
+  renderControls(); sendState();
+}
+$('muteBtn').onclick = toggleMute;
+$('deafBtn').onclick = toggleDeaf;
+
+$('mode').onchange = () => { settings.mode = $('mode').value; store.set('mode', settings.mode); pushGate(); renderControls(); };
+$('sens').oninput = () => { settings.sens = Number($('sens').value); store.set('sens', settings.sens); pushGate(); renderControls(); };
+
+const typing = () => ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement?.tagName) && document.activeElement.type !== 'range';
+document.addEventListener('keydown', (e) => {
+  if (!myId || typing() || e.repeat) return;
+  if (e.code === 'KeyM') toggleMute();
+  if (e.code === 'KeyD') toggleDeaf();
+});
+
+// ---------- Masaüstü programına özel ----------
+if (desk) {
+  $('server').value = settings.server;
+  desk.onHotkey((k) => { if (!myId) return; k === 'mute' ? toggleMute() : toggleDeaf(); });
+
+  const renderHost = (h) => {
+    hostState = h && h.running ? h : null;
+    const info = $('hostInfo');
+    $('hostBtn').disabled = !!(h && h.busy);
+    $('hostBtn').textContent = hostState ? '⏹️ Sunucuyu kapat' : '🖥️ Bu bilgisayarda sunucu aç';
+    if (!h) { info.innerHTML = ''; return; }
+    let html = h.message ? esc(h.message) + '<br>' : '';
+    if (hostState) {
+      if (h.publicUrl) html += `Arkadaşlarına gönder: <b>${esc(h.publicUrl)}</b> <button class="btn copy" type="button" data-copy="${esc(h.publicUrl)}">Kopyala</button><br>`;
+      else if (h.lan?.length) html += `Aynı ağdakiler için: <b>${h.lan.map(esc).join(', ')}</b><br>`;
+      html += 'Sunucu açık. Program kapanınca sunucu da kapanır.';
+    }
+    info.innerHTML = html;
+  };
+  desk.onHostStatus(renderHost);
+  $('hostInfo').addEventListener('click', async (e) => {
+    const t = e.target.closest('[data-copy]');
+    if (t) { try { await navigator.clipboard.writeText(t.dataset.copy); t.textContent = 'Kopyalandı'; } catch {} }
+  });
+  $('hostBtn').onclick = async () => {
+    if (hostState) {
+      renderHost(await desk.stopHost());
+      settings.server = DEFAULT_SERVER; $('server').value = DEFAULT_SERVER; store.set('server', DEFAULT_SERVER);
+      startLobby();
+      return;
+    }
+    const h = await desk.startHost();
+    renderHost(h);
+    if (h.running) { settings.server = `http://localhost:${h.port}`; $('server').value = settings.server; store.set('server', settings.server); startLobby(); }
+  };
+  $('server').onchange = () => {
+    settings.server = $('server').value.trim() || DEFAULT_SERVER;
+    if (!myId) startLobby();
+  };
+}
+
+// Davet linkiyle gelindiyse oda adı alanı görünsün
+if (new URLSearchParams(location.search).get('oda')) $('more').open = true;
+startLobby();
+
+// Ayarlar
+async function fillDevices() {
+  const devs = await navigator.mediaDevices.enumerateDevices();
+  const fill = (sel, kind, cur) => {
+    sel.innerHTML = '<option value="">Varsayılan</option>' + devs.filter((d) => d.kind === kind && d.deviceId !== 'default')
+      .map((d, i) => `<option value="${esc(d.deviceId)}">${esc(d.label || `${kind} ${i + 1}`)}</option>`).join('');
+    sel.value = cur;
+    if (sel.value !== cur) sel.value = '';
+  };
+  fill($('inDev'), 'audioinput', settings.inDev);
+  fill($('outDev'), 'audiooutput', settings.outDev);
+  $('outDev').disabled = !('setSinkId' in HTMLMediaElement.prototype);
+}
+$('settingsBtn').onclick = async () => {
+  $('noiseSup').checked = settings.noiseSup;
+  $('sounds').checked = settings.sounds;
+  await fillDevices();
+  $('settings').showModal();
+};
+$('closeSettings').onclick = () => $('settings').close();
+navigator.mediaDevices?.addEventListener?.('devicechange', () => { if ($('settings').open) fillDevices().catch(() => {}); });
+$('inDev').onchange = async () => {
+  settings.inDev = $('inDev').value; store.set('inDev', settings.inDev);
+  try { await openMic(); toast('Mikrofon değişti'); } catch (e) { toast('Mikrofon açılamadı'); }
+};
+$('outDev').onchange = () => {
+  settings.outDev = $('outDev').value; store.set('outDev', settings.outDev);
+  for (const p of peers.values()) applyOutput(p);
+};
+$('noiseSup').onchange = async () => {
+  settings.noiseSup = $('noiseSup').checked; store.set('noiseSup', settings.noiseSup);
+  try { await openMic(); } catch {}
+};
+$('sounds').onchange = () => { settings.sounds = $('sounds').checked; store.set('sounds', settings.sounds); };
+
+window.addEventListener('beforeunload', () => { leaving = true; ws?.close(); });
+</script>
+</body>
+</html>

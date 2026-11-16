@@ -1,0 +1,73 @@
+{
+  "name": "sesli-sohbet",
+  "productName": "guyfat-e",
+  "version": "1.4.0",
+  "description": "Arkadaşlarla oyun oynarken kullanmak için sesli sohbet programı",
+  "author": "guyfat-e",
+  "license": "MIT",
+  "main": "desktop/main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "dist:win": "electron-builder --win --x64",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.seslisohbet.app",
+    "productName": "guyfat-e",
+    "files": [
+      "desktop/**",
+      "public/**",
+      "server.js",
+      "build/icon.png",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "guyfat-e",
+      "artifactName": "guyfat-e-Kurulum-${version}.exe"
+    },
+    "portable": {
+      "artifactName": "guyfat-e-Tasinabilir-${version}.exe"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.social-networking",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Arkadaşlarınla sesli sohbet etmek için mikrofon gerekiyor."
+      }
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Network"
+    },
+    "publish": null
+  },
+  "allowScripts": {
+    "electron@33.4.11": true
+  }
+}
